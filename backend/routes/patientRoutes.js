@@ -3,6 +3,7 @@ const router = express.Router();
 const { verifyToken, requireRole } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 const {
+    getDashboard,
     getProfile,
     updateProfile,
     searchDoctors,
@@ -21,6 +22,9 @@ const {
 
 // All patient routes require authentication + patient role
 router.use(verifyToken, requireRole('patient'));
+
+// Dashboard
+router.get('/dashboard', getDashboard);
 
 // Profile
 router.get('/profile', getProfile);

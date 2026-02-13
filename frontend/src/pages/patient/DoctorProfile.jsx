@@ -30,8 +30,22 @@ const DoctorProfile = () => {
         setSelectedDate(date);
         setSelectedTime('');
         try {
-            const res = await api.get(`/patient/doctors/${id}/slots?date=${date}`);
-            setSlots(res.data || []);
+            const res = await api.get(`/patient/doctors/${id}/availability?date=${date}`);
+            const data = res.data || {};
+            // Generate time slots from schedule, excluding booked ones
+            const dayName = new Date(date).toLocaleDateString('en-US', { weekday: 'long' });
+            const schedule = (data.schedule || []).find(s => s.day_of_week === dayName);
+            if (!schedule) { setSlots([]); return; }
+            const generated = [];
+            let [sh, sm] = schedule.start_time.split(':').map(Number);
+            const [eh, em] = schedule.end_time.split(':').map(Number);
+            while (sh < eh || (sh === eh && sm < em)) {
+                const slot = `${String(sh).padStart(2, '0')}:${String(sm).padStart(2, '0')}`;
+                if (!(data.bookedSlots || []).includes(slot)) generated.push(slot);
+                sm += 30;
+                if (sm >= 60) { sh++; sm = 0; }
+            }
+            setSlots(generated);
         } catch (err) { toast.error(err.message); }
     };
 

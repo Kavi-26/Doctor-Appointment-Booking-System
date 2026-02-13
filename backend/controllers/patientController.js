@@ -3,6 +3,49 @@ const { v4: uuidv4 } = require('uuid');
 const { notifyBookingConfirmation, notifyCancellation, createNotification } = require('../services/notificationService');
 
 // ============================================
+// GET PATIENT DASHBOARD
+// ============================================
+const getDashboard = async (req, res) => {
+    try {
+        const patientId = req.user.id;
+
+        // Get appointment stats
+        const [statsRows] = await db.query(
+            `SELECT
+                SUM(CASE WHEN status IN ('pending','confirmed') AND appointment_date >= CURDATE() THEN 1 ELSE 0 END) AS upcoming,
+                SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed,
+                SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled,
+                COUNT(*) AS total
+            FROM appointments WHERE patient_id = ?`,
+            [patientId]
+        );
+
+        const stats = {
+            upcoming: statsRows[0].upcoming || 0,
+            completed: statsRows[0].completed || 0,
+            cancelled: statsRows[0].cancelled || 0,
+            total: statsRows[0].total || 0
+        };
+
+        // Get upcoming appointments
+        const [upcoming] = await db.query(
+            `SELECT a.*, d.name AS doctor_name, d.specialization, d.profile_image AS doctor_image
+            FROM appointments a
+            JOIN doctors d ON a.doctor_id = d.id
+            WHERE a.patient_id = ? AND a.appointment_date >= CURDATE() AND a.status IN ('pending','confirmed')
+            ORDER BY a.appointment_date ASC, a.time_slot ASC
+            LIMIT 5`,
+            [patientId]
+        );
+
+        res.json({ success: true, data: { stats, upcoming } });
+    } catch (error) {
+        console.error('Dashboard error:', error);
+        res.status(500).json({ success: false, message: 'Server error.' });
+    }
+};
+
+// ============================================
 // GET PATIENT PROFILE
 // ============================================
 const getProfile = async (req, res) => {
@@ -488,6 +531,7 @@ const getSpecializations = async (req, res) => {
 };
 
 module.exports = {
+    getDashboard,
     getProfile,
     updateProfile,
     searchDoctors,
