@@ -59,7 +59,7 @@ const AdminDoctors = () => {
                 ) : (
                     <div className="table-wrapper animate-fadeIn">
                         <table className="table">
-                            <thead><tr><th>Name</th><th>Email</th><th>Specialization</th><th>Experience</th><th>License</th><th>Status</th><th>Actions</th></tr></thead>
+                            <thead><tr><th>Name</th><th>Email</th><th>Specialization</th><th>Experience</th><th>Status</th><th>Actions</th></tr></thead>
                             <tbody>
                                 {filtered.map(doc => (
                                     <tr key={doc.id}>
@@ -67,7 +67,6 @@ const AdminDoctors = () => {
                                         <td>{doc.email}</td>
                                         <td>{doc.specialization}</td>
                                         <td>{doc.experience} yrs</td>
-                                        <td>{doc.license_number}</td>
                                         <td><span className={`badge badge-${doc.status === 'approved' ? 'confirmed' : doc.status}`}>{doc.status}</span></td>
                                         <td className="appointment-actions">
                                             {doc.status === 'pending' && <>
