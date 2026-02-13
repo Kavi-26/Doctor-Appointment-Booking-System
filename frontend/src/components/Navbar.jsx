@@ -50,7 +50,6 @@ const Navbar = () => {
                 <>
                     <Link to="/patient/login" className="nav-link">Patient Login</Link>
                     <Link to="/doctor/login" className="nav-link">Doctor Login</Link>
-                    <Link to="/admin/login" className="nav-link">Admin Login</Link>
                 </>
             );
         }
