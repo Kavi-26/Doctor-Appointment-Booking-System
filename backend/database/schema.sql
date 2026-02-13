@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS admins (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     email VARCHAR(150) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL,
     role VARCHAR(50) DEFAULT 'super_admin',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_email (email)
@@ -184,10 +184,9 @@ CREATE TABLE IF NOT EXISTS system_settings (
 -- SEED DATA
 -- ============================================
 
--- Default Admin (password: admin123)
--- bcrypt hash for 'admin123'
-INSERT INTO admins (name, email, password_hash, role) VALUES
-('System Admin', 'admin@system.com', '$2a$10$8K1p/a0dR1xqM8K6hT5O5eXXBgRw5KZQO2DPfBG5FHnMCfN4/Oy6', 'super_admin')
+-- Default Admin (password: 123456)
+INSERT INTO admins (name, email, password, role) VALUES
+('System Admin', 'admin@system.com', '123456', 'super_admin')
 ON DUPLICATE KEY UPDATE name = name;
 
 -- Default System Settings

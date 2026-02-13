@@ -14,7 +14,11 @@ const AdminDoctors = () => {
     const loadDoctors = async () => {
         try {
             const res = await api.get('/admin/doctors');
-            setDoctors(res.data || []);
+            const list = (res.data || []).map(d => ({
+                ...d,
+                status: d.is_approved ? 'approved' : 'pending'
+            }));
+            setDoctors(list);
         } catch (err) { toast.error(err.message); }
         setLoading(false);
     };

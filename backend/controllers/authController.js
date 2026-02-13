@@ -231,7 +231,7 @@ const adminLogin = async (req, res) => {
 
         const admin = admins[0];
 
-        const isMatch = await bcrypt.compare(password, admin.password_hash);
+        const isMatch = password === admin.password;
         if (!isMatch) {
             return res.status(401).json({ success: false, message: 'Invalid email or password.' });
         }
