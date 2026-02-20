@@ -75,7 +75,7 @@ const PatientAppointments = () => {
                                         <td><strong>Dr. {appt.doctor_name}</strong></td>
                                         <td>{appt.specialization}</td>
                                         <td>{new Date(appt.appointment_date).toLocaleDateString()}</td>
-                                        <td>{appt.appointment_time}</td>
+                                        <td>{appt.time_slot}</td>
                                         <td><span className={`badge badge-${appt.status}`}>{appt.status}</span></td>
                                         <td>
                                             {(appt.status === 'pending' || appt.status === 'confirmed') && (

@@ -49,7 +49,7 @@ const PatientHistory = () => {
                                         <td><strong>Dr. {appt.doctor_name}</strong></td>
                                         <td>{appt.specialization}</td>
                                         <td>{new Date(appt.appointment_date).toLocaleDateString()}</td>
-                                        <td>{appt.appointment_time}</td>
+                                        <td>{appt.time_slot}</td>
                                         <td>{appt.consultation_notes || '—'}</td>
                                     </tr>
                                 ))}

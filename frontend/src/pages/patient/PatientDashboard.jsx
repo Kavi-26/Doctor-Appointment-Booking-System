@@ -93,7 +93,7 @@ const PatientDashboard = () => {
                                         <div className="appointment-avatar">👨‍⚕️</div>
                                         <div className="appointment-info">
                                             <h4>Dr. {appt.doctor_name}</h4>
-                                            <p>{new Date(appt.appointment_date).toLocaleDateString()} • {appt.appointment_time}</p>
+                                            <p>{new Date(appt.appointment_date).toLocaleDateString()} • {appt.time_slot}</p>
                                             <p>{appt.specialization}</p>
                                         </div>
                                         <span className={`badge badge-${appt.status}`}>{appt.status}</span>

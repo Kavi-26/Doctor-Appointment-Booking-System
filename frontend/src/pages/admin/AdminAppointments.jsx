@@ -54,7 +54,7 @@ const AdminAppointments = () => {
                                         <td>{a.patient_name}</td>
                                         <td>Dr. {a.doctor_name}</td>
                                         <td>{new Date(a.appointment_date).toLocaleDateString()}</td>
-                                        <td>{a.appointment_time}</td>
+                                        <td>{a.time_slot}</td>
                                         <td><span className={`badge badge-${a.status}`}>{a.status}</span></td>
                                         <td>{(a.status === 'pending' || a.status === 'confirmed') && <button className="btn btn-danger btn-sm" onClick={() => forceCancel(a.id)}>Cancel</button>}</td>
                                     </tr>

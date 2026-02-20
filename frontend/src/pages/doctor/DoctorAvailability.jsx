@@ -24,7 +24,7 @@ const DoctorAvailability = () => {
     const addSlot = async (e) => {
         e.preventDefault();
         try {
-            await api.post('/doctor/availability', { day_of_week: parseInt(newSlot.day_of_week), start_time: newSlot.start_time, end_time: newSlot.end_time, slot_duration: parseInt(newSlot.slot_duration) });
+            await api.post('/doctor/availability', { day_of_week: parseInt(newSlot.day_of_week), start_time: newSlot.start_time, end_time: newSlot.end_time });
             toast.success('Availability added!');
             loadSlots();
         } catch (err) { toast.error(err.message); }
