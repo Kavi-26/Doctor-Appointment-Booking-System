@@ -88,14 +88,13 @@ const DoctorAvailability = () => {
                             ) : (
                                 <div className="table-wrapper">
                                     <table className="table">
-                                        <thead><tr><th>Day</th><th>Start</th><th>End</th><th>Duration</th><th>Actions</th></tr></thead>
+                                        <thead><tr><th>Day</th><th>Start</th><th>End</th><th>Actions</th></tr></thead>
                                         <tbody>
                                             {slots.map(slot => (
                                                 <tr key={slot.id}>
-                                                    <td><strong>{days[slot.day_of_week]}</strong></td>
+                                                    <td><strong>{slot.day_of_week}</strong></td>
                                                     <td>{slot.start_time}</td>
                                                     <td>{slot.end_time}</td>
-                                                    <td>{slot.slot_duration} min</td>
                                                     <td><button className="btn btn-danger btn-sm" onClick={() => deleteSlot(slot.id)}>Remove</button></td>
                                                 </tr>
                                             ))}

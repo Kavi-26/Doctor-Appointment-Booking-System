@@ -53,7 +53,7 @@ const DoctorProfile = () => {
         if (!selectedDate || !selectedTime) { toast.warning('Please select date and time slot.'); return; }
         setBooking(true);
         try {
-            await api.post('/patient/appointments', { doctor_id: id, appointment_date: selectedDate, appointment_time: selectedTime, reason });
+            await api.post('/patient/appointments', { doctor_id: id, date: selectedDate, time_slot: selectedTime, reason });
             toast.success('Appointment booked successfully!');
             navigate('/patient/appointments');
         } catch (err) { toast.error(err.message); }

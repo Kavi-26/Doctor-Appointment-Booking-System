@@ -530,6 +530,62 @@ const getSpecializations = async (req, res) => {
     }
 };
 
+// ============================================
+// GET ALL APPOINTMENTS (with optional status filter)
+// ============================================
+const getAllAppointments = async (req, res) => {
+    try {
+        const { status } = req.query;
+        let query = `SELECT a.*, d.name AS doctor_name, d.specialization, d.profile_image AS doctor_image
+       FROM appointments a
+       JOIN doctors d ON a.doctor_id = d.id
+       WHERE a.patient_id = ?`;
+        const params = [req.user.id];
+
+        if (status) {
+            query += ' AND a.status = ?';
+            params.push(status);
+        }
+
+        query += ' ORDER BY a.appointment_date DESC, a.time_slot DESC';
+        const [appointments] = await db.query(query, params);
+        res.json({ success: true, data: appointments });
+    } catch (error) {
+        console.error('Get all appointments error:', error);
+        res.status(500).json({ success: false, message: 'Server error.' });
+    }
+};
+
+// ============================================
+// CHANGE PASSWORD
+// ============================================
+const changePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ success: false, message: 'Current and new password are required.' });
+        }
+
+        const bcrypt = require('bcryptjs');
+        const [users] = await db.query('SELECT password_hash FROM users WHERE id = ?', [req.user.id]);
+        if (users.length === 0) {
+            return res.status(404).json({ success: false, message: 'User not found.' });
+        }
+
+        const isMatch = await bcrypt.compare(currentPassword, users[0].password_hash);
+        if (!isMatch) {
+            return res.status(401).json({ success: false, message: 'Current password is incorrect.' });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await db.query('UPDATE users SET password_hash = ? WHERE id = ?', [hashedPassword, req.user.id]);
+        res.json({ success: true, message: 'Password changed successfully.' });
+    } catch (error) {
+        console.error('Change password error:', error);
+        res.status(500).json({ success: false, message: 'Server error.' });
+    }
+};
+
 module.exports = {
     getDashboard,
     getProfile,
@@ -538,6 +594,7 @@ module.exports = {
     viewDoctor,
     checkAvailability,
     bookAppointment,
+    getAllAppointments,
     getUpcomingAppointments,
     getAppointmentHistory,
     cancelAppointment,
@@ -545,5 +602,6 @@ module.exports = {
     submitReview,
     getNotifications,
     markNotificationRead,
-    getSpecializations
+    getSpecializations,
+    changePassword
 };

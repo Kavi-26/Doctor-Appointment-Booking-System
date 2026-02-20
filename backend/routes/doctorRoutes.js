@@ -3,16 +3,19 @@ const router = express.Router();
 const { verifyToken, requireRole } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 const {
+    getDashboard,
     getProfile,
     updateProfile,
     getTodayAppointments,
     getUpcomingAppointments,
+    getAllAppointments,
     acceptAppointment,
     rejectAppointment,
     completeAppointment,
     addNotes,
     uploadPrescription,
-    setAvailability,
+    addAvailability,
+    deleteAvailability,
     getAvailability,
     blockDate,
     getBlockedDates,
@@ -24,11 +27,15 @@ const {
 // All doctor routes require authentication + doctor role
 router.use(verifyToken, requireRole('doctor'));
 
+// Dashboard
+router.get('/dashboard', getDashboard);
+
 // Profile
 router.get('/profile', getProfile);
 router.put('/profile', upload.single('profile_image'), updateProfile);
 
 // Appointments
+router.get('/appointments', getAllAppointments);
 router.get('/appointments/today', getTodayAppointments);
 router.get('/appointments/upcoming', getUpcomingAppointments);
 router.put('/appointments/:id/accept', acceptAppointment);
@@ -39,7 +46,8 @@ router.post('/appointments/:id/prescription', upload.single('prescription'), upl
 
 // Availability
 router.get('/availability', getAvailability);
-router.post('/availability', setAvailability);
+router.post('/availability', addAvailability);
+router.delete('/availability/:id', deleteAvailability);
 
 // Blocked Dates
 router.get('/blocked-dates', getBlockedDates);

@@ -10,6 +10,7 @@ const {
     viewDoctor,
     checkAvailability,
     bookAppointment,
+    getAllAppointments,
     getUpcomingAppointments,
     getAppointmentHistory,
     cancelAppointment,
@@ -17,7 +18,8 @@ const {
     submitReview,
     getNotifications,
     markNotificationRead,
-    getSpecializations
+    getSpecializations,
+    changePassword
 } = require('../controllers/patientController');
 
 // All patient routes require authentication + patient role
@@ -37,6 +39,7 @@ router.get('/doctors/:id/availability', checkAvailability);
 router.get('/specializations', getSpecializations);
 
 // Appointments
+router.get('/appointments', getAllAppointments);
 router.post('/appointments', bookAppointment);
 router.get('/appointments/upcoming', getUpcomingAppointments);
 router.get('/appointments/history', getAppointmentHistory);
@@ -49,5 +52,8 @@ router.post('/reviews', submitReview);
 // Notifications
 router.get('/notifications', getNotifications);
 router.put('/notifications/:id/read', markNotificationRead);
+
+// Password
+router.put('/password', changePassword);
 
 module.exports = router;

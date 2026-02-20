@@ -59,7 +59,7 @@ const DoctorAppointments = () => {
                                     <tr key={appt.id}>
                                         <td><strong>{appt.patient_name}</strong></td>
                                         <td>{new Date(appt.appointment_date).toLocaleDateString()}</td>
-                                        <td>{appt.appointment_time}</td>
+                                        <td>{appt.time_slot}</td>
                                         <td>{appt.reason || '—'}</td>
                                         <td><span className={`badge badge-${appt.status}`}>{appt.status}</span></td>
                                         <td className="appointment-actions">

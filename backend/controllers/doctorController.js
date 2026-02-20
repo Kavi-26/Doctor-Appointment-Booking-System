@@ -2,6 +2,46 @@ const db = require('../config/db');
 const { createNotification } = require('../services/notificationService');
 
 // ============================================
+// GET DOCTOR DASHBOARD
+// ============================================
+const getDashboard = async (req, res) => {
+    try {
+        const doctorId = req.user.id;
+
+        const [statsRows] = await db.query(
+            `SELECT
+                SUM(CASE WHEN appointment_date = CURDATE() AND status IN ('pending','confirmed') THEN 1 ELSE 0 END) AS today,
+                SUM(CASE WHEN appointment_date > CURDATE() AND status IN ('pending','confirmed') THEN 1 ELSE 0 END) AS upcoming,
+                SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed,
+                COUNT(*) AS total
+            FROM appointments WHERE doctor_id = ?`,
+            [doctorId]
+        );
+
+        const stats = {
+            today: statsRows[0].today || 0,
+            upcoming: statsRows[0].upcoming || 0,
+            completed: statsRows[0].completed || 0,
+            total: statsRows[0].total || 0
+        };
+
+        const [todayAppts] = await db.query(
+            `SELECT a.*, u.name AS patient_name, u.email AS patient_email, u.phone AS patient_phone
+            FROM appointments a
+            JOIN users u ON a.patient_id = u.id
+            WHERE a.doctor_id = ? AND a.appointment_date = CURDATE()
+            ORDER BY a.time_slot ASC`,
+            [doctorId]
+        );
+
+        res.json({ success: true, data: { stats, today: todayAppts } });
+    } catch (error) {
+        console.error('Doctor dashboard error:', error);
+        res.status(500).json({ success: false, message: 'Server error.' });
+    }
+};
+
+// ============================================
 // GET DOCTOR PROFILE
 // ============================================
 const getProfile = async (req, res) => {
@@ -93,6 +133,26 @@ const getUpcomingAppointments = async (req, res) => {
         res.json({ success: true, data: appointments });
     } catch (error) {
         console.error('Get upcoming appointments error:', error);
+        res.status(500).json({ success: false, message: 'Server error.' });
+    }
+};
+
+// ============================================
+// GET ALL APPOINTMENTS
+// ============================================
+const getAllAppointments = async (req, res) => {
+    try {
+        const [appointments] = await db.query(
+            `SELECT a.*, u.name AS patient_name, u.email AS patient_email, u.phone AS patient_phone
+       FROM appointments a
+       JOIN users u ON a.patient_id = u.id
+       WHERE a.doctor_id = ?
+       ORDER BY a.appointment_date DESC, a.time_slot DESC`,
+            [req.user.id]
+        );
+        res.json({ success: true, data: appointments });
+    } catch (error) {
+        console.error('Get all appointments error:', error);
         res.status(500).json({ success: false, message: 'Server error.' });
     }
 };
@@ -227,30 +287,52 @@ const uploadPrescription = async (req, res) => {
 };
 
 // ============================================
-// SET AVAILABILITY
+// ADD AVAILABILITY (single slot)
 // ============================================
-const setAvailability = async (req, res) => {
+const addAvailability = async (req, res) => {
     try {
-        const { schedule } = req.body;
-        // schedule = [{ day_of_week, start_time, end_time, is_available }]
+        const { day_of_week, start_time, end_time } = req.body;
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const dayName = typeof day_of_week === 'number' ? days[day_of_week] : day_of_week;
 
-        if (!schedule || !Array.isArray(schedule)) {
-            return res.status(400).json({ success: false, message: 'Schedule array is required.' });
+        if (!dayName || !start_time || !end_time) {
+            return res.status(400).json({ success: false, message: 'Day, start time, and end time are required.' });
         }
 
-        // Delete existing availability and re-insert
-        await db.query('DELETE FROM availability WHERE doctor_id = ?', [req.user.id]);
-
-        for (const slot of schedule) {
+        // Check for existing slot on same day
+        const [existing] = await db.query(
+            'SELECT id FROM availability WHERE doctor_id = ? AND day_of_week = ?',
+            [req.user.id, dayName]
+        );
+        if (existing.length > 0) {
+            // Update existing
             await db.query(
-                'INSERT INTO availability (doctor_id, day_of_week, start_time, end_time, is_available) VALUES (?, ?, ?, ?, ?)',
-                [req.user.id, slot.day_of_week, slot.start_time, slot.end_time, slot.is_available !== false]
+                'UPDATE availability SET start_time = ?, end_time = ?, is_available = TRUE WHERE doctor_id = ? AND day_of_week = ?',
+                [start_time, end_time, req.user.id, dayName]
+            );
+        } else {
+            await db.query(
+                'INSERT INTO availability (doctor_id, day_of_week, start_time, end_time, is_available) VALUES (?, ?, ?, ?, TRUE)',
+                [req.user.id, dayName, start_time, end_time]
             );
         }
 
-        res.json({ success: true, message: 'Availability updated successfully.' });
+        res.json({ success: true, message: 'Availability added successfully.' });
     } catch (error) {
-        console.error('Set availability error:', error);
+        console.error('Add availability error:', error);
+        res.status(500).json({ success: false, message: 'Server error.' });
+    }
+};
+
+// ============================================
+// DELETE AVAILABILITY
+// ============================================
+const deleteAvailability = async (req, res) => {
+    try {
+        await db.query('DELETE FROM availability WHERE id = ? AND doctor_id = ?', [req.params.id, req.user.id]);
+        res.json({ success: true, message: 'Availability removed.' });
+    } catch (error) {
+        console.error('Delete availability error:', error);
         res.status(500).json({ success: false, message: 'Server error.' });
     }
 };
@@ -370,16 +452,19 @@ const getNotifications = async (req, res) => {
 };
 
 module.exports = {
+    getDashboard,
     getProfile,
     updateProfile,
     getTodayAppointments,
     getUpcomingAppointments,
+    getAllAppointments,
     acceptAppointment,
     rejectAppointment,
     completeAppointment,
     addNotes,
     uploadPrescription,
-    setAvailability,
+    addAvailability,
+    deleteAvailability,
     getAvailability,
     blockDate,
     getBlockedDates,

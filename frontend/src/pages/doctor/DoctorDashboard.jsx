@@ -71,7 +71,7 @@ const DoctorDashboard = () => {
                                     <div className="appointment-avatar">🧑‍💼</div>
                                     <div className="appointment-info">
                                         <h4>{appt.patient_name}</h4>
-                                        <p>{appt.appointment_time} • {appt.reason || 'General checkup'}</p>
+                                        <p>{appt.time_slot} • {appt.reason || 'General checkup'}</p>
                                     </div>
                                     <span className={`badge badge-${appt.status}`}>{appt.status}</span>
                                 </div>
