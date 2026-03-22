@@ -36,7 +36,7 @@ const Home = () => {
         return () => io.disconnect();
     }, []);
 
-    const [docs, docsRef] = useCounter(500);
+    const [docs, docsRef] = useCounter(100);
     const [appts, apptsRef] = useCounter(10000);
     const [sat, satRef] = useCounter(98);
 

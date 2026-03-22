@@ -278,38 +278,83 @@ const forceCancelAppointment = async (req, res) => {
 // ============================================
 const getReports = async (req, res) => {
     try {
-        const { period } = req.query; // daily, weekly, monthly
+        const { period, month, year } = req.query;
+        let dateCondition = '';
+        let regDateCondition = '';
 
-        // Appointment trends (last 30 days)
+        // If specific month + year provided (for monthly view)
+        if (month && year) {
+            const m = parseInt(month);
+            const y = parseInt(year);
+            dateCondition = `appointment_date >= '${y}-${String(m).padStart(2, '0')}-01' AND appointment_date < DATE_ADD('${y}-${String(m).padStart(2, '0')}-01', INTERVAL 1 MONTH)`;
+            regDateCondition = `created_at >= '${y}-${String(m).padStart(2, '0')}-01' AND created_at < DATE_ADD('${y}-${String(m).padStart(2, '0')}-01', INTERVAL 1 MONTH)`;
+        }
+        // If only year provided (for yearly view)
+        else if (year && !month) {
+            const y = parseInt(year);
+            dateCondition = `appointment_date >= '${y}-01-01' AND appointment_date < '${y + 1}-01-01'`;
+            regDateCondition = `created_at >= '${y}-01-01' AND created_at < '${y + 1}-01-01'`;
+        }
+        // Relative period filters
+        else if (period === 'daily') {
+            dateCondition = 'appointment_date = CURDATE()';
+            regDateCondition = 'created_at >= CURDATE()';
+        } else if (period === 'weekly') {
+            dateCondition = 'appointment_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)';
+            regDateCondition = 'created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)';
+        } else {
+            // Default to last 30 days
+            dateCondition = 'appointment_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)';
+            regDateCondition = 'created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)';
+        }
+
+        // Period Stats
+        const [totalAppointments] = await db.query(`SELECT COUNT(*) AS count FROM appointments WHERE ${dateCondition}`);
+        const [completedAppointments] = await db.query(`SELECT COUNT(*) AS count FROM appointments WHERE ${dateCondition} AND status = 'completed'`);
+        const [cancelledAppointments] = await db.query(`SELECT COUNT(*) AS count FROM appointments WHERE ${dateCondition} AND status = 'cancelled'`);
+        const [newDoctors] = await db.query(`SELECT COUNT(*) AS count FROM doctors WHERE ${regDateCondition}`);
+        const [newPatients] = await db.query(`SELECT COUNT(*) AS count FROM users WHERE ${regDateCondition}`);
+
+        // Appointment trends — filtered by same period
         const [trends] = await db.query(`
       SELECT DATE(appointment_date) AS date, COUNT(*) AS count, status
       FROM appointments
-      WHERE appointment_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+      WHERE ${dateCondition}
       GROUP BY DATE(appointment_date), status
       ORDER BY date ASC
     `);
 
-        // Top specializations
+        // Top specializations — filtered by same period
         const [specializations] = await db.query(`
       SELECT d.specialization, COUNT(a.id) AS appointment_count
       FROM appointments a JOIN doctors d ON a.doctor_id = d.id
+      WHERE ${dateCondition}
       GROUP BY d.specialization
       ORDER BY appointment_count DESC
       LIMIT 10
     `);
 
-        // Monthly revenue
-        const [monthlyRevenue] = await db.query(`
+        // Revenue — filtered by same period
+        const [revenueData] = await db.query(`
       SELECT DATE_FORMAT(a.appointment_date, '%Y-%m') AS month,
              COUNT(*) AS appointments, COALESCE(SUM(d.consultation_fee), 0) AS revenue
       FROM appointments a JOIN doctors d ON a.doctor_id = d.id
-      WHERE a.status = 'completed'
+      WHERE a.status = 'completed' AND ${dateCondition}
       GROUP BY month ORDER BY month DESC LIMIT 12
     `);
 
         res.json({
             success: true,
-            data: { trends, specializations, monthlyRevenue }
+            data: {
+                totalAppointments: totalAppointments[0].count,
+                completedAppointments: completedAppointments[0].count,
+                cancelledAppointments: cancelledAppointments[0].count,
+                newDoctors: newDoctors[0].count,
+                newPatients: newPatients[0].count,
+                trends,
+                specializations,
+                monthlyRevenue: revenueData
+            }
         });
     } catch (error) {
         console.error('Reports error:', error);
